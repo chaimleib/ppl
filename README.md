@@ -1,6 +1,6 @@
 # Print PList (ppl)
 
-This utility is designed to convert Apple PList files to xml, json and yaml. I/O can be specified as arguments, or via command-line arguments.
+This utility is designed to convert Apple PList files to xml, json and yaml. I/O can be to and from regular files or stdin and stdout.
 
 Unlike Apple's plutil, ppl can output data fields in json. Also, ppl outputs yaml.
 

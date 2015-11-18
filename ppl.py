@@ -13,24 +13,32 @@ def main(argv):
     if opts.fmt == 'xml':
         converted = pll.writePlistToString(data)
     else:
-        normalized = normalize_data(data)
+        normalized = normalize_types(data)
         converted = convert_data(normalized, opts)
     return write_output(converted, opts)
 
 def parse_args(args):
-    parser = argparse.ArgumentParser(description='Converts plists to xml, yaml and json.')
+    parser = argparse.ArgumentParser(
+        description='Converts plists to xml, yaml and json.'
+    )
     parser.add_argument('-j', '--json',
         dest='fmt', action='store_const', const='json', default='xml',
-        help='output in json format')
+        help='output in JSON format')
     parser.add_argument('-y', '--yaml',
         dest='fmt', action='store_const', const='yaml', default='xml',
-        help='output in yaml format')
+        help='output in YAML format')
     parser.add_argument('-p', '--pprint',
         dest='fmt', action='store_const', const='pprint', default='xml',
         help='output in Python\'s pprint format')
     parser.add_argument('-x', '--xml',
         dest='fmt', action='store_const', const='xml', default='xml',
         help='output as plist xml (default)')
+    #parser.add_argument('-f', '--force',
+    #    help='try to represent all data, even if the conversion is irreversible. ' +
+    #    '(--json and --yaml only. Data fields will be represented as strings.)')
+    #parser.add_argument('-n', '--no-annotate',
+    #    help='remove comment indicating which fields were converted and how ' +
+    #    '(--json or --yaml only when using --force)')
     parser.add_argument('ifile',
         default=sys.stdin, nargs='?', metavar='IFILE',
         help='the file to convert (default: stdin)')
@@ -48,23 +56,31 @@ def parse_string(s, opts):
     plist = pll.readPlistFromString(s)
     return plist
 
-def normalize_data(data):
+def normalize_types(data):
+    """
+    This allows YAML and JSON to store Data fields as strings. However, this
+    operation is irreversible.  Only use if read-only access to the plist is
+    required.
+    """
     if isinstance(data, pll.Data): return data.data
     if isinstance(data, list):
         retval = []
         for child in data:
-            retval.append(normalize_data(child))
+            retval.append(normalize_types(child))
         return retval
     if isinstance(data, dict):
         retval = {}
         for key, child in data.iteritems():
-            retval[key] = normalize_data(child)
+            retval[key] = normalize_types(child)
         return retval
     return data
 
 def convert_data(data, opts):
-    if opts.fmt == 'yaml': return yaml.dump(data, width=float('inf'), default_flow_style=False)
-    if opts.fmt == 'json': return json.dumps(data, sort_keys=True, indent=4)
+    if opts.fmt == 'yaml':
+        return yaml.dump(data, width=float('inf'), default_flow_style=False)
+    if opts.fmt == 'json':
+        return json.dumps(data, sort_keys=True, indent=4)
+    #if opts.fmt == 'pprint':  # default
     return pformat(data)
 
 def write_output(s, opts):
